@@ -19,12 +19,12 @@ from PIL import Image
 image = Image.new('1', (8, 8))
 
 while True:
-	x = random.randint(0,7)
-	y = random.randint(0,7)
-	image.putpixel((x, y), 1)
-	device.display(image)
-	sleep(.05)
-	image.putpixel((x, y), 0)
+        x = random.randint(0,7)
+        y = random.randint(0,7)
+        image.putpixel((x, y), 1)
+        device.display(image)
+        sleep(.05)
+        image.putpixel((x, y), 0)
         device.display(image)
       
 
