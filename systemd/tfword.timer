@@ -1,0 +1,9 @@
+[Unit]
+Description=Run TFWord on boot
+
+[Timer]
+OnBootSec=2min
+#OnUnitActiveSec=1w
+
+[Install]
+WantedBy=timers.target
