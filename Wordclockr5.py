@@ -63,6 +63,7 @@ def parse_cmd_line():
     parser.add_argument('language', default='English', nargs='?', choices=['English', 'French', 'Dutch', 'German'], help='Language: English ONLY CURRENTLY (default: %(default)s)')
     
     parser.add_argument('-c', '--clear', action='store_true', dest='c', help='Clear the display and exit')
+    parser.add_argument('-u', '--user', default='pi', dest='user', help='User where source is, for writing brightness file in /home/USER/TFWordclock directory (default: %(default)s)')
 
     # Parse the arguments.  Exits if help is called, or there is a problem
     args = parser.parse_args()
@@ -99,6 +100,9 @@ elif args.language == "Dutch":
 else:
         print("Invalid language extension " , mod_ext , " not found")
         sys.exit() 
+
+# set up filename for writing brightness data
+tfw_data_file = '/home/%s/TFWordclock/TFW_data.txt' % args.user
 
 # Set up class access
 wrdck = DMS_wrdck()
@@ -159,7 +163,7 @@ GPIO.setup(47,GPIO.OUT)
 # Try to read stored brightness level
 def readbright():
         try:
-                f_dat = open('/home/pi/TFWordclock/TFW_data.txt','r')
+                f_dat = open(tfw_data_file,'r')
                 bl_lev = int(f_dat.readline())
                 if bl_lev < 2 or bl_lev >15:
                         bl_lev = 15 
@@ -181,7 +185,7 @@ def writebright(bl_lev):
         try:
                 if bl_lev < 2 or bl_lev >15:
                         bl_lev = 15
-                f_dat = open('/home/pi/TFWordclock/TFW_data.txt','w')
+                f_dat = open(tfw_data_file,'w')
                 f_dat.write(str(bl_lev)+'\n')
                 f_dat.close()
                 print()
@@ -506,6 +510,8 @@ range = readbright()    # Set range of brightness level to stored value if avail
                         # A range setting of 15 will allow 15 brightness settings
                         # A range seeting of 1 will lock the brightness at it lowest setting
 
+writebright(range)      # Try to update brightness level (also done on poweroff)
+
 print()
 print()
 print("Syncing app timer loop to clock time")
@@ -519,13 +525,17 @@ wrdck.clear()
 cur_time_hr  = int(datetime.now().strftime('%H'))
 cur_time_min = int(datetime.now().strftime('%M'))
 Max_br = setbright(range)
+Prev_max_br  = -1
 
 #Main time display loop
 while True:
         # Update display
         # the 'T' suffix is so the timewdr file knows this is a time rather than control display call
         wrdck.ckdisp(cur_time_min,cur_time_hr,'T')
-        print("hr = ",cur_time_hr," mn = ",cur_time_min, " Max7219 brightness setting = ", Max_br, " Range 1 -", range)
+        if Max_br != Prev_max_br:
+            # Only display if max brightness changes
+            print("hr = ",cur_time_hr," mn = ",cur_time_min, " Max7219 brightness setting = ", Max_br, " Range 1 -", range)
+            Prev_max_br = Max_br
 
         # Wait until minute changes before calling display update again
         temp = cur_time_min
